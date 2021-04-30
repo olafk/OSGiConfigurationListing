@@ -1,0 +1,5 @@
+dependencies {
+	compileOnly group: "com.liferay.portal", name: "release.dxp.api", version: "7.3.10-ga1"
+
+	cssBuilder group: "com.liferay", name: "com.liferay.css.builder", version: "3.0.2"
+}

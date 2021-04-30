@@ -1,0 +1,5 @@
+Bundle-Name: OSGi Configuration Listing
+Bundle-SymbolicName: OSGiConfigurationListing
+Bundle-Version: 1.0.0
+Export-Package: de.olafkock.liferay.osgiconfigurationlisting.constants
+Bundle-Activator: de.olafkock.liferay.osgiconfigurationlisting.BundleActivator
