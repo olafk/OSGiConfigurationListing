@@ -7,8 +7,8 @@ public class ADContent {
 	public String name;
 	public String description;
 	public String[] deflts;
-	public String type = "undetected";
-	public String cardinality = "undetected";
+	public String type;
+	public String cardinality;
 	
 	@SuppressWarnings("deprecation")
 	public void resolveType(AttributeDefinition ad) {
