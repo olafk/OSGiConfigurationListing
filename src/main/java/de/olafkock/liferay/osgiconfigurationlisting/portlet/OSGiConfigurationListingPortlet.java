@@ -88,7 +88,6 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 				+ "OSGi configuration info for "
 				+ ReleaseInfo.getReleaseInfo()
 				+ "</title>\n"
-				+ "<generator>"
 				+ "<style>"
 				+ "td { border: 1px solid grey; vertical-align:top; padding-right:1em; }\n"
 				+ "tr.attributename  { font-weight:bold; }\n"
