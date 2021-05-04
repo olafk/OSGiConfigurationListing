@@ -3,11 +3,13 @@ package de.olafkock.liferay.osgiconfigurationlisting.portlet;
 import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.configuration.metatype.definitions.ExtendedMetaTypeService;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
+import com.liferay.portal.kernel.util.WebKeys;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.List;
 import java.util.SortedSet;
 
 import javax.portlet.Portlet;
@@ -61,7 +63,8 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 	@Override
 	public void doView(RenderRequest request, RenderResponse response)
 			throws IOException, PortletException {
-	
+		ThemeDisplay themeDisplay = (ThemeDisplay) request.getAttribute(WebKeys.THEME_DISPLAY);
+
 		super.doView(request, response);
 
 		PrintWriter writer = response.getWriter();
@@ -71,7 +74,7 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 				+ "</h1>" 
 		);
 
-		SortedSet<OCDContent> ocdContents = metaInfoExtractor.extractOCD(_extendedMetaTypeService);
+		SortedSet<OCDContent> ocdContents = metaInfoExtractor.extractOCD(_extendedMetaTypeService, themeDisplay.getLocale());
 		printToc(writer, ocdContents);
 		printContent(writer, ocdContents);
 	}
@@ -80,6 +83,7 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 	@Override
 	public void serveResource(ResourceRequest resourceRequest, ResourceResponse resourceResponse)
 			throws IOException, PortletException {
+		ThemeDisplay themeDisplay = (ThemeDisplay) resourceRequest.getAttribute(WebKeys.THEME_DISPLAY);
 
 		resourceResponse.setContentType("text/html");
 		PrintWriter writer = resourceResponse.getWriter();
@@ -99,7 +103,7 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 				+ ReleaseInfo.getReleaseInfo()
 				+ "</h1>"
 				);
-		SortedSet<OCDContent> ocdContents = metaInfoExtractor.extractOCD(_extendedMetaTypeService);
+		SortedSet<OCDContent> ocdContents = metaInfoExtractor.extractOCD(_extendedMetaTypeService, themeDisplay.getLocale());
 
 		printToc(writer, ocdContents);
 		printContent(writer, ocdContents);
@@ -217,6 +221,13 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 	            		+ "<tr><td>Type</td><td>" + adContent.type + adContent.cardinality + "</td></tr>" 
 	            		+ ""
 	            );
+				if(!adContent.options.isEmpty()) {
+					out.println("<tr><td>Options</td><td><ul>");
+					for (String option : adContent.options) {
+						out.println("<li>" + option + "</li>");
+					}
+					out.println("</ul></td></tr>");
+				}
 			}
 	        out.println("</table>");
 		}

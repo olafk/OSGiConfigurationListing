@@ -1,5 +1,12 @@
 package de.olafkock.liferay.osgiconfigurationlisting.portlet;
 
+import com.liferay.portal.kernel.language.LanguageUtil;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.ResourceBundle;
+
 import org.osgi.service.metatype.AttributeDefinition;
 
 public class ADContent {
@@ -9,6 +16,7 @@ public class ADContent {
 	public String[] deflts;
 	public String type;
 	public String cardinality;
+	public List<String> options = Collections.EMPTY_LIST;
 	
 	@SuppressWarnings("deprecation")
 	public void resolveType(AttributeDefinition ad) {
@@ -52,6 +60,17 @@ public class ADContent {
 			type="Bigdecimal-deprecated"; break;
 		default:
 			type="unknown type:" + ad.getType();
+		}
+	}
+
+	public void resolveOptions(AttributeDefinition attributeDefinition, ResourceBundle rb) {
+		String[] optionLabels = attributeDefinition.getOptionLabels();
+		String[] optionValues = attributeDefinition.getOptionValues();
+		if(optionLabels==null) return;
+		
+		options = new ArrayList<String>(optionLabels.length);
+		for (int i = 0; i < optionValues.length; i++) {
+			options.add(optionValues[i] + " (" + LanguageUtil.get(rb, optionLabels[i]) + ")");
 		}
 	}
 }

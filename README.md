@@ -13,5 +13,4 @@ As it needs to run within Liferay (to get access to all configuration of the run
 * Implement with proper services instead of low-level access, as they can be seen in ConfigurationModelRetrieverImpl
 * Prettify code (from explorational style)
 * Prettify output
-* Display available options for configuration values in places where they're enumerated in their AD.
 * [Include in publication process](https://issues.liferay.com/browse/LRDOCS-9384)

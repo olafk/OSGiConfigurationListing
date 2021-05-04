@@ -35,19 +35,19 @@ import de.olafkock.liferay.osgiconfigurationlisting.BundleActivator;
 
 public class MetaInfoExtractor {
 	
-	public SortedSet<OCDContent> extractOCD(ExtendedMetaTypeService ems) {
+	public SortedSet<OCDContent> extractOCD(ExtendedMetaTypeService ems, Locale locale) {
 		SortedSet<OCDContent> result = new TreeSet<OCDContent>(new OCDContentComparator());
 		BundleContext bc = BundleActivator.bundleContext;
 		Bundle[] bundles = bc.getBundles();
 
 		for (Bundle bundle : bundles) {
-			result.addAll(extractOCD(bundle, ems));
+			result.addAll(extractOCD(bundle, ems, locale));
 		}
 		
 		return result;
 	}
 	
-	public List<OCDContent> extractOCD(Bundle b, ExtendedMetaTypeService ems) {
+	public List<OCDContent> extractOCD(Bundle b, ExtendedMetaTypeService ems, Locale locale) {
 		LinkedList<OCDContent> result = new LinkedList<OCDContent>();
 		MetaTypeService mts = BundleActivator.mts;
 	    MetaTypeInformation mti = mts.getMetaTypeInformation(b);
@@ -67,7 +67,7 @@ public class MetaInfoExtractor {
             result.add(ocdContent);
             ResourceBundle rb;
             try{
-            	rb = ResourceBundleUtil.getBundle(Locale.ENGLISH, b.adapt(BundleWiring.class).getClassLoader());
+            	rb = ResourceBundleUtil.getBundle(locale, b.adapt(BundleWiring.class).getClassLoader());
             } catch(MissingResourceException e) {
             	ocdContent.comment = "Bundle " + b.getSymbolicName() + " does not have a resource bundle content.Language";
                 rb = new EmptyResourceBundle();
@@ -106,6 +106,7 @@ public class MetaInfoExtractor {
 				adContent.description = LanguageUtil.get(rb, ads[j].getDescription());
 				adContent.deflts = ads[j].getDefaultValue();
 				adContent.resolveType(ads[j]);
+				adContent.resolveOptions(ads[j], rb);
             }
         }
         return result;
