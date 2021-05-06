@@ -16,7 +16,7 @@ public class ADContent {
 	public String[] deflts;
 	public String type;
 	public String cardinality;
-	public List<String> options = Collections.EMPTY_LIST;
+	public List<String> options = Collections.emptyList();
 	
 	@SuppressWarnings("deprecation")
 	public void resolveType(AttributeDefinition ad) {

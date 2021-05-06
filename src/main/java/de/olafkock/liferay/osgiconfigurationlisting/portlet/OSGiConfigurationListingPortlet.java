@@ -2,9 +2,9 @@ package de.olafkock.liferay.osgiconfigurationlisting.portlet;
 
 import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.configuration.metatype.definitions.ExtendedMetaTypeService;
+import com.liferay.portal.kernel.patcher.PatcherUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.WebKeys;
 
@@ -64,14 +64,16 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 	public void doView(RenderRequest request, RenderResponse response)
 			throws IOException, PortletException {
 		ThemeDisplay themeDisplay = (ThemeDisplay) request.getAttribute(WebKeys.THEME_DISPLAY);
+		String[] installedPatches = PatcherUtil.getInstalledPatches();
 
 		super.doView(request, response);
 
 		PrintWriter writer = response.getWriter();
 		writer.println( "<h1>"
-				+ "Updated OSGi configuration info for "
+				+ "OSGi configuration info for "
 				+ ReleaseInfo.getReleaseInfo()
 				+ "</h1>" 
+				+ (installedPatches != null ? "Installed Patches: " + StringUtil.merge(installedPatches, ", ") : "")
 		);
 
 		SortedSet<OCDContent> ocdContents = metaInfoExtractor.extractOCD(_extendedMetaTypeService, themeDisplay.getLocale());
@@ -84,10 +86,11 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 	public void serveResource(ResourceRequest resourceRequest, ResourceResponse resourceResponse)
 			throws IOException, PortletException {
 		ThemeDisplay themeDisplay = (ThemeDisplay) resourceRequest.getAttribute(WebKeys.THEME_DISPLAY);
+		String[] installedPatches = PatcherUtil.getInstalledPatches();
 
 		resourceResponse.setContentType("text/html");
 		PrintWriter writer = resourceResponse.getWriter();
-		
+
 		writer.println("<html><head><title>"
 				+ "OSGi configuration info for "
 				+ ReleaseInfo.getReleaseInfo()
@@ -102,6 +105,8 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 				+ "OSGi configuration info for "
 				+ ReleaseInfo.getReleaseInfo()
 				+ "</h1>"
+				+ "Installed Patches: "
+				+ (installedPatches != null ? StringUtil.merge(installedPatches, ", ") : "-")
 				);
 		SortedSet<OCDContent> ocdContents = metaInfoExtractor.extractOCD(_extendedMetaTypeService, themeDisplay.getLocale());
 
@@ -178,7 +183,6 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 	        if(description == null || description.isEmpty()) {
 	       		description = "<i>please contribute</i>";
 	        }
-	        String ocdid = ocdContent.id;
 	        out.println("<h4>"
 	        		+ ocdContent.name 
 					+ "</h4>"
