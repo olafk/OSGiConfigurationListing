@@ -2,9 +2,11 @@ package de.olafkock.liferay.osgiconfigurationlisting.portlet;
 
 import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.configuration.metatype.definitions.ExtendedMetaTypeService;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.patcher.PatcherUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.WebKeys;
 
@@ -18,6 +20,7 @@ import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import javax.portlet.ResourceRequest;
 import javax.portlet.ResourceResponse;
+import javax.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -61,24 +64,24 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 	MetaInfoExtractor metaInfoExtractor = new MetaInfoExtractor();
 	
 	@Override
-	public void doView(RenderRequest request, RenderResponse response)
+	public void doView(RenderRequest renderRequest, RenderResponse response)
 			throws IOException, PortletException {
-		ThemeDisplay themeDisplay = (ThemeDisplay) request.getAttribute(WebKeys.THEME_DISPLAY);
+		ThemeDisplay themeDisplay = (ThemeDisplay) renderRequest.getAttribute(WebKeys.THEME_DISPLAY);
+		HttpServletRequest request = PortalUtil.getHttpServletRequest(renderRequest);
 		String[] installedPatches = PatcherUtil.getInstalledPatches();
 
-		super.doView(request, response);
+		super.doView(renderRequest, response);
 
 		PrintWriter writer = response.getWriter();
 		writer.println( "<h1>"
-				+ "OSGi configuration info for "
-				+ ReleaseInfo.getReleaseInfo()
+				+ LanguageUtil.format(request, "report.title", ReleaseInfo.getReleaseInfo())
 				+ "</h1>" 
-				+ (installedPatches != null ? "Installed Patches: " + StringUtil.merge(installedPatches, ", ") : "")
+				+ LanguageUtil.format(request, "report.patchlevel", (installedPatches != null ? StringUtil.merge(installedPatches, ", ") : "-"))
 		);
-
+		
 		SortedSet<OCDContent> ocdContents = metaInfoExtractor.extractOCD(_extendedMetaTypeService, themeDisplay.getLocale());
-		printToc(writer, ocdContents);
-		printContent(writer, ocdContents);
+		printToc(writer, ocdContents, request);
+		printContent(writer, ocdContents, request);
 	}
 	
 	
@@ -86,14 +89,13 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 	public void serveResource(ResourceRequest resourceRequest, ResourceResponse resourceResponse)
 			throws IOException, PortletException {
 		ThemeDisplay themeDisplay = (ThemeDisplay) resourceRequest.getAttribute(WebKeys.THEME_DISPLAY);
+		HttpServletRequest request = PortalUtil.getHttpServletRequest(resourceRequest);
 		String[] installedPatches = PatcherUtil.getInstalledPatches();
 
 		resourceResponse.setContentType("text/html");
 		PrintWriter writer = resourceResponse.getWriter();
-
 		writer.println("<html><head><title>"
-				+ "OSGi configuration info for "
-				+ ReleaseInfo.getReleaseInfo()
+				+ LanguageUtil.format(request, "report.title", ReleaseInfo.getReleaseInfo())
 				+ "</title>\n"
 				+ "<style>"
 				+ "td { border: 1px solid grey; vertical-align:top; padding-right:1em; }\n"
@@ -102,21 +104,20 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 				+ "</head>"
 				+ "<body>"
 				+ "<h1>"
-				+ "OSGi configuration info for "
-				+ ReleaseInfo.getReleaseInfo()
+				+ LanguageUtil.format(request, "report.title", ReleaseInfo.getReleaseInfo())
 				+ "</h1>"
-				+ "Installed Patches: "
-				+ (installedPatches != null ? StringUtil.merge(installedPatches, ", ") : "-")
+				+ LanguageUtil.format(request, "report.patchlevel", (installedPatches != null ? StringUtil.merge(installedPatches, ", ") : "-"))
 				);
 		SortedSet<OCDContent> ocdContents = metaInfoExtractor.extractOCD(_extendedMetaTypeService, themeDisplay.getLocale());
 
-		printToc(writer, ocdContents);
-		printContent(writer, ocdContents);
+		printToc(writer, ocdContents, request);
+		printContent(writer, ocdContents, request);
 		
 		writer.println("\n</body></html>");
 	}
 
-	void printToc(PrintWriter out, SortedSet<OCDContent> ocdContents) {
+	void printToc(PrintWriter out, SortedSet<OCDContent> ocdContents, HttpServletRequest request) {
+		
 		String prevScope = "";
 		String prevCategory = "";
 		boolean categoryListOpen = false;
@@ -126,10 +127,10 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 				if(categoryListOpen) {
 					out.print("</ul>");
 				}
-				out.println("<h2>Scope: <a href=\"#scope-" 
+				out.println("<h2><a href=\"#scope-" 
 						+ ocdContent.scope 
 						+ "\">"
-						+ ocdContent.scope
+						+ ocdContent.localizedScope
 						+ "</a>"
 						+ "</h2>"
 						);
@@ -138,12 +139,15 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 			}
 			
 			if(! ocdContent.category.equals(prevCategory)) {
-				out.println("<li><a href=\"#scope-" 
+				out.println("<li>"
+						+ " <a href=\"#scope-" 
 						+ ocdContent.scope
 						+ "-"
 						+ ocdContent.category
 						+ "\">"
-						+ (ocdContent.category.isEmpty()? "! <i>empty</i> !" : ocdContent.category)
+						+ (ocdContent.category.isEmpty()? "<i>"
+								+ LanguageUtil.get(request, "report.empty")
+								+ "</i>" : ocdContent.localizedCategory)
 						+ "</a>"
 						+ "</li>"
 						);
@@ -159,7 +163,7 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 	
 	
 	
-	void printContent(PrintWriter out, SortedSet<OCDContent> ocdContents) {
+	void printContent(PrintWriter out, SortedSet<OCDContent> ocdContents, HttpServletRequest request) {
 		String prevScope = "";
 		String prevCategory = "";
 		
@@ -167,12 +171,16 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 	
 			if(! ocdContent.scope.equals(prevScope)) {
 				out.println("<a name=\"scope-" + ocdContent.scope + "\"></a>");
-				out.println("<h2>Scope: " + ocdContent.scope + "</h2>");
+				out.println("<h2>" + ocdContent.localizedScope + "</h2>");
 			}
 			
 			if(! ocdContent.category.equals(prevCategory)) {
 				out.println("<a name=\"scope-" + ocdContent.scope + "-" + ocdContent.category + "\"></a>");
-				out.println("<h3>Category: " + ocdContent.category + "</h3>");
+				out.println("<h3>"
+						+ LanguageUtil.get(request, "ocd.category")
+						+ " "
+						+ ocdContent.localizedCategory 
+						+ " (" + ocdContent.category + ")</h3>");
 			}
 			
 			
@@ -181,31 +189,44 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 			
 	        String description = ocdContent.description;
 	        if(description == null || description.isEmpty()) {
-	       		description = "<i>please contribute</i>";
+	       		description = "<i>"
+						+ LanguageUtil.get(request, "cta-please-contribute")
+	       				+ "</i>";
 	        }
 	        out.println("<h4>"
 	        		+ ocdContent.name 
 					+ "</h4>"
 					+ "<p>"
-					+ "<strong>Id:</strong> " 
+					+ "<strong>"
+					+ LanguageUtil.get(request, "ocd.id")
+					+ "</strong> " 
 					+ ocdContent.id
 					+ "<br/>\n"
-					+ "<strong>Bundle:</strong> "
+					+ "<strong>"
+					+ LanguageUtil.get(request, "ocd.bundle")
+					+ "</strong> "
 					+ ocdContent.bundle
 					+ "<br/>\n"
-					+ "<strong>Description:</strong> " 
+					+ "<strong>"
+					+ LanguageUtil.get(request, "ocd.description")
+					+ "</strong> " 
 					+ description 
 					+ "<br/>\n"
-					+ "<strong>Category:</strong> "
+					+ "<strong>"
+					+ LanguageUtil.get(request, "ocd.category")
+					+ "</strong> "
 					+ ocdContent.category
 					+ "<br/>\n"
-					+ "<strong>Scope:</strong> "
+					+ "<strong>"
+					+ LanguageUtil.get(request, "ocd.scope")
+					+ "</strong> "
 					+ ocdContent.scope
 			);
 	        if(ocdContent.comment != null) {
 	            out.println(
 	    			"<br/>\n"
-	    			+ "Comment: "
+   					+ LanguageUtil.get(request, "ocd.comment")
+   					+ " "
 	    			+ ocdContent.comment
 	            );
 	        }
@@ -216,17 +237,29 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 				String[] deflts = adContent.deflts;
 				String deflt = (deflts == null) ? "<i>null</i>" : StringUtil.merge(deflts, "<br/>");
 				if(adDescription == null || adDescription.isEmpty()) {
-					adDescription = "<i>please contribute</i>";
+					adDescription = "<i>"
+							+ LanguageUtil.get(request, "cta-please-contribute")
+							+ "</i>";
 				}
 				out.println("<tr class=\"attributename\"><td colspan=\"2\">" + adContent.name + "</td></tr>" 
-	            		+ "<tr><td>Id</td><td>" + adContent.id + "</td></tr>" 
-	            		+ "<tr><td>Description</td><td>" + adDescription + " </td></tr>"
-	            		+ "<tr><td>Default</td><td>" + deflt + "</td></tr>" 
-	            		+ "<tr><td>Type</td><td>" + adContent.type + adContent.cardinality + "</td></tr>" 
+	            		+ "<tr><td>"
+						+ LanguageUtil.get(request, "ad.id")
+	            		+ "</td><td>" + adContent.id + "</td></tr>" 
+	            		+ "<tr><td>"
+						+ LanguageUtil.get(request, "ad.description")
+	            		+ "</td><td>" + adDescription + " </td></tr>"
+	            		+ "<tr><td>"
+						+ LanguageUtil.get(request, "ad.default")
+	            		+ "</td><td>" + deflt + "</td></tr>" 
+	            		+ "<tr><td>"
+						+ LanguageUtil.get(request, "ad.type")
+	            		+ "</td><td>" + adContent.type + adContent.cardinality + "</td></tr>" 
 	            		+ ""
 	            );
 				if(!adContent.options.isEmpty()) {
-					out.println("<tr><td>Options</td><td><ul>");
+					out.println("<tr><td>"
+							+ LanguageUtil.get(request, "ad.options")
+							+ "</td><td><ul>");
 					for (String option : adContent.options) {
 						out.println("<li>" + option + "</li>");
 					}

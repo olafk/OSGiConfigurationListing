@@ -34,20 +34,28 @@ import de.olafkock.liferay.osgiconfigurationlisting.BundleActivator;
  */
 
 public class MetaInfoExtractor {
-	
+
 	public SortedSet<OCDContent> extractOCD(ExtendedMetaTypeService ems, Locale locale) {
 		SortedSet<OCDContent> result = new TreeSet<OCDContent>(new OCDContentComparator());
 		BundleContext bc = BundleActivator.bundleContext;
 		Bundle[] bundles = bc.getBundles();
-
+		ResourceBundle cfgAdminRb = new EmptyResourceBundle();
+		
 		for (Bundle bundle : bundles) {
-			result.addAll(extractOCD(bundle, ems, locale));
+			if(bundle.getSymbolicName().equals("com.liferay.configuration.admin.web")) {
+				cfgAdminRb = ResourceBundleUtil.getBundle(locale, 
+						bundle.adapt(BundleWiring.class).getClassLoader());
+			}
+		}
+		
+		for (Bundle bundle : bundles) {
+			result.addAll(extractOCD(bundle, ems, locale, cfgAdminRb));
 		}
 		
 		return result;
 	}
 	
-	public List<OCDContent> extractOCD(Bundle b, ExtendedMetaTypeService ems, Locale locale) {
+	public List<OCDContent> extractOCD(Bundle b, ExtendedMetaTypeService ems, Locale locale, ResourceBundle cfgAdminRb) {
 		LinkedList<OCDContent> result = new LinkedList<OCDContent>();
 		MetaTypeService mts = BundleActivator.mts;
 	    MetaTypeInformation mti = mts.getMetaTypeInformation(b);
@@ -91,9 +99,14 @@ public class MetaInfoExtractor {
 				String scope = eocd.getExtensionAttributes(extention).get("scope");
 				if(category != null) {
 					ocdContent.category = category;
+					if(!category.isEmpty())
+						ocdContent.localizedCategory = LanguageUtil.get(cfgAdminRb, "category." + category);
+				} else {
+					ocdContent.localizedCategory = LanguageUtil.get(cfgAdminRb, "category.third-party");
 				}
 				if(scope != null) {
 					ocdContent.scope = scope;
+					ocdContent.localizedScope = LanguageUtil.get(cfgAdminRb, "scope." + scope);
 				}
 			}
             

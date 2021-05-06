@@ -7,8 +7,10 @@ public class OCDContent {
 	public String id;
 	public String name;
 	public String description;
-	public String category = "undetected";
-	public String scope = "undetected";
+	public String category = "undeclared";
+	public String localizedCategory = "undeclared category";
+	public String scope = "undeclared";
+	public String localizedScope = "undeclared scope";
 	public List<ADContent> ads = new LinkedList<ADContent>();
 	public String comment;
 	public String bundle;
