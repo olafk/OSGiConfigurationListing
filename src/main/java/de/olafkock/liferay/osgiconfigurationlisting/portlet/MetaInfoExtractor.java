@@ -101,6 +101,8 @@ public class MetaInfoExtractor {
 					ocdContent.category = category;
 					if(!category.isEmpty())
 						ocdContent.localizedCategory = LanguageUtil.get(cfgAdminRb, "category." + category);
+						if(ocdContent.localizedCategory.startsWith("category."))
+							ocdContent.localizedCategory = LanguageUtil.get(rb, "category." + category);
 				} else {
 					ocdContent.localizedCategory = LanguageUtil.get(cfgAdminRb, "category.third-party");
 				}
