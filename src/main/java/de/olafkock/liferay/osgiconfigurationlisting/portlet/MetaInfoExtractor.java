@@ -67,62 +67,72 @@ public class MetaInfoExtractor {
 	    }
         
 	    for (int i=0; i< pids.length; i++) {
-            ObjectClassDefinition ocd = mti.getObjectClassDefinition(pids[i], null);
-            ExtendedObjectClassDefinition eocd = emti.getObjectClassDefinition(ocd.getID(), null);
-            
-            AttributeDefinition[] ads = ocd.getAttributeDefinitions(ObjectClassDefinition.ALL);
-            OCDContent ocdContent = new OCDContent();
-            result.add(ocdContent);
-            ResourceBundle rb;
-            try{
-            	rb = ResourceBundleUtil.getBundle(locale, b.adapt(BundleWiring.class).getClassLoader());
-            } catch(MissingResourceException e) {
-            	ocdContent.comment = "Bundle " + b.getSymbolicName() + " does not have a resource bundle content.Language";
-                rb = new EmptyResourceBundle();
-            }
-            
-            String description = ocd.getDescription();
-            if(description != null && !description.isEmpty()) {
-            	String translated = LanguageUtil.get(rb, description);
-            	if(!translated.equals(description)) {
-            		description = translated;
-            	}
-            }
-            
-            ocdContent.id = ocd.getID();
-            ocdContent.name = LanguageUtil.get(rb, ocd.getName());
-            ocdContent.description = description;
-            ocdContent.bundle = b.getSymbolicName();
-            Set<String> extensionUris = eocd.getExtensionUris();
-            for (String extention : extensionUris) {
-				String category = eocd.getExtensionAttributes(extention).get("category");
-				String scope = eocd.getExtensionAttributes(extention).get("scope");
-				if(category != null) {
-					ocdContent.category = category;
-					if(!category.isEmpty())
-						ocdContent.localizedCategory = LanguageUtil.get(cfgAdminRb, "category." + category);
-						if(ocdContent.localizedCategory.startsWith("category."))
-							ocdContent.localizedCategory = LanguageUtil.get(rb, "category." + category);
-				} else {
-					ocdContent.localizedCategory = LanguageUtil.get(cfgAdminRb, "category.third-party");
+			OCDContent ocdContent = new OCDContent();
+			result.add(ocdContent);
+			ResourceBundle rb;
+			String errorContext = "none";
+            try {
+				ObjectClassDefinition ocd = mti.getObjectClassDefinition(pids[i], null);
+				errorContext = ocd.getID();
+				ExtendedObjectClassDefinition eocd = emti.getObjectClassDefinition(ocd.getID(), null);
+				
+				AttributeDefinition[] ads = ocd.getAttributeDefinitions(ObjectClassDefinition.ALL);
+				try{
+					rb = ResourceBundleUtil.getBundle(locale, b.adapt(BundleWiring.class).getClassLoader());
+				} catch(MissingResourceException e) {
+					ocdContent.comment = "Bundle " + b.getSymbolicName() + " does not have a resource bundle content.Language";
+				    rb = new EmptyResourceBundle();
 				}
-				if(scope != null) {
-					ocdContent.scope = scope;
-					ocdContent.localizedScope = LanguageUtil.get(cfgAdminRb, "scope." + scope);
+				
+				String description = ocd.getDescription();
+				if(description != null && !description.isEmpty()) {
+					String translated = LanguageUtil.get(rb, description);
+					if(!translated.equals(description)) {
+						description = translated;
+					}
 				}
+				
+				ocdContent.id = ocd.getID();
+				ocdContent.name = LanguageUtil.get(rb, ocd.getName());
+				ocdContent.description = description;
+				ocdContent.bundle = b.getSymbolicName();
+				Set<String> extensionUris = eocd.getExtensionUris();
+				for (String extention : extensionUris) {
+					String category = eocd.getExtensionAttributes(extention).get("category");
+					String scope = eocd.getExtensionAttributes(extention).get("scope");
+					if(category != null) {
+						ocdContent.category = category;
+						if(!category.isEmpty())
+							ocdContent.localizedCategory = LanguageUtil.get(cfgAdminRb, "category." + category);
+							if(ocdContent.localizedCategory.startsWith("category."))
+								ocdContent.localizedCategory = LanguageUtil.get(rb, "category." + category);
+					} else {
+						ocdContent.localizedCategory = LanguageUtil.get(cfgAdminRb, "category.third-party");
+					}
+					if(scope != null) {
+						ocdContent.scope = scope;
+						ocdContent.localizedScope = LanguageUtil.get(cfgAdminRb, "scope." + scope);
+					}
+				}
+				
+				for (int j=0; j< ads.length; j++) {
+					ADContent adContent = new ADContent();
+					ocdContent.ads.add(adContent);
+					
+					adContent.id = ads[j].getID();
+					adContent.name = LanguageUtil.get(rb, ads[j].getName());
+					adContent.description = LanguageUtil.get(rb, ads[j].getDescription());
+					adContent.deflts = ads[j].getDefaultValue();
+					adContent.resolveType(ads[j]);
+					adContent.resolveOptions(ads[j], rb);
+				}
+			} catch (Exception e) {
+				ocdContent.comment = e.getClass().getName() 
+						+ " " 
+						+ e.getMessage() 
+						+ " in context " 
+						+ errorContext;
 			}
-            
-            for (int j=0; j< ads.length; j++) {
-            	ADContent adContent = new ADContent();
-            	ocdContent.ads.add(adContent);
-            	
-            	adContent.id = ads[j].getID();
-				adContent.name = LanguageUtil.get(rb, ads[j].getName());
-				adContent.description = LanguageUtil.get(rb, ads[j].getDescription());
-				adContent.deflts = ads[j].getDefaultValue();
-				adContent.resolveType(ads[j]);
-				adContent.resolveOptions(ads[j], rb);
-            }
         }
         return result;
 	}
