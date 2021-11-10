@@ -97,9 +97,11 @@ public class MetaInfoExtractor {
 				ocdContent.description = description;
 				ocdContent.bundle = b.getSymbolicName();
 				Set<String> extensionUris = eocd.getExtensionUris();
+
 				for (String extention : extensionUris) {
 					String category = eocd.getExtensionAttributes(extention).get("category");
 					String scope = eocd.getExtensionAttributes(extention).get("scope");
+
 					if(category != null) {
 						ocdContent.category = category;
 						if(!category.isEmpty())

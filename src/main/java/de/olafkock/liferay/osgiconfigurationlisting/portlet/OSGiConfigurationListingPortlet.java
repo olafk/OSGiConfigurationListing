@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.util.WebKeys;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.SortedSet;
 
 import javax.portlet.Portlet;
@@ -121,6 +122,16 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 		String prevScope = "";
 		String prevCategory = "";
 		boolean categoryListOpen = false;
+		HashMap<String, Integer> totals = new HashMap<String, Integer> ();
+		HashMap<String, Integer> required = new HashMap<String, Integer> ();
+		HashMap<String, Integer> subchapters = new HashMap<String, Integer> ();
+		
+		for(OCDContent ocdContent : ocdContents ) {
+			String key = ocdContent.scope+"-"+ocdContent.category;
+			updateMap(totals, key, getTotalCount(ocdContent));
+			updateMap(required, key, getRequiredContributionsCount(ocdContent));
+			updateMap(subchapters, key, 1);
+		}
 		
 		for (OCDContent ocdContent : ocdContents) {
 			if(! ocdContent.scope.equals(prevScope)) {
@@ -137,8 +148,12 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 				out.println("<ul>");
 				categoryListOpen = true;
 			}
-			
+
 			if(! ocdContent.category.equals(prevCategory)) {
+				int requiredCount = required.get(ocdContent.scope+"-"+ocdContent.category);
+				int totalCount = totals.get(ocdContent.scope+"-"+ocdContent.category);
+				int subCount = subchapters.get(ocdContent.scope+"-"+ocdContent.category);
+				int percent = (int)(100.0*(totalCount-requiredCount)/totalCount);
 				out.println("<li>"
 						+ " <a href=\"#scope-" 
 						+ ocdContent.scope
@@ -148,7 +163,14 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 						+ (ocdContent.category.isEmpty()? "<i>"
 								+ LanguageUtil.get(request, "report.empty")
 								+ "</i>" : ocdContent.localizedCategory)
-						+ "</a>"
+						+ "</a> ("
+						+ (requiredCount != 0 
+								? "<span style=\"color:red;\">" + requiredCount + " contributions needed, " 
+								: "<span>")
+						+ "<strong>"
+						+ percent+"%</strong> of " 
+						+ totalCount + " entries documented in " 
+						+ subCount + " sub-entries</span>)"
 						+ "</li>"
 						);
 			}
@@ -182,7 +204,6 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 						+ ocdContent.localizedCategory 
 						+ " (" + ocdContent.category + ")</h3>");
 			}
-			
 			
 			prevScope = ocdContent.scope;
 			prevCategory = ocdContent.category;
@@ -270,5 +291,29 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 		}
 	}
 
+	int getRequiredContributionsCount(OCDContent ocdContent) {
+		int result = 0;
+		if(ocdContent.description == null || ocdContent.description.isEmpty()) {
+			result++;
+		}
+		for (ADContent adContent : ocdContent.ads) {
+			if(adContent.description == null || adContent.description.isEmpty()) {
+				result++;
+			}
+		}
+		return result;
+	}
+	
+	int getTotalCount(OCDContent ocdContent) {
+		int result = ocdContent.ads.size()+1;
+		return result;
+	}
+
+	void updateMap(HashMap<String, Integer> map, String key, int count) {
+		Integer value = map.get(key);
+		if(value == null) value = 0;
+		value += count;
+		map.put(key, value);
+	}
 	
 }
