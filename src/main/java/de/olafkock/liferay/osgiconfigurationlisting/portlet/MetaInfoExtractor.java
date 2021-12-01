@@ -57,7 +57,7 @@ public class MetaInfoExtractor {
 	
 	public List<OCDContent> extractOCD(Bundle b, ExtendedMetaTypeService ems, Locale locale, ResourceBundle cfgAdminRb) {
 		LinkedList<OCDContent> result = new LinkedList<OCDContent>();
-		MetaTypeService mts = BundleActivator.mts;
+		MetaTypeService mts = BundleActivator.getMts();
 	    MetaTypeInformation mti = mts.getMetaTypeInformation(b);
 	    ExtendedMetaTypeInformation emti = ems.getMetaTypeInformation(b);
 
@@ -115,6 +115,9 @@ public class MetaInfoExtractor {
 						ocdContent.scope = scope;
 						ocdContent.localizedScope = LanguageUtil.get(cfgAdminRb, "scope." + scope);
 					}
+					
+					ocdContent.learnMessageKey = eocd.getExtensionAttributes(extention).get("liferayLearnMessageKey");
+					ocdContent.learnMessageResource = eocd.getExtensionAttributes(extention).get("liferayLearnMessageResource");
 				}
 				
 				for (int j=0; j< ads.length; j++) {
