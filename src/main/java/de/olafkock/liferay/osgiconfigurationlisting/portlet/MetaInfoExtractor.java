@@ -105,7 +105,7 @@ public class MetaInfoExtractor {
 				ocdContent.scope = "no-scope-given";
 				ocdContent.localizedScope = "no scope given";
 				ocdContent.category = "third-party"; // best guess as default. Not sure if it's accurate, but looks good
-				Set<String> extensionUris = Collections.EMPTY_SET;
+				Set<String> extensionUris = Collections.emptySet();
 				if(eocd != null) extensionUris = eocd.getExtensionUris();
 
 				for (String extention : extensionUris) {

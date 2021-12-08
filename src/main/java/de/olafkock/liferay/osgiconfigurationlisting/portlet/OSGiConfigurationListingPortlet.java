@@ -143,14 +143,11 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 			printToc(writer, ocdContents, request);
 			printContent(writer, ocdContents, request);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			e.printStackTrace(writer);
 		}
 		
 		writer.println("\n</body></html>");
 	}
-
-	
 	
 	private String getStyleSheet(String scope) {
 		scope += " ";
@@ -170,9 +167,6 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 	}
 
 	void printToc(PrintWriter out, SortedSet<OCDContent> ocdContents, HttpServletRequest request) {
-		HashMap<String, Integer> totals = new HashMap<String, Integer> ();
-		HashMap<String, Integer> required = new HashMap<String, Integer> ();
-		HashMap<String, Integer> subchapters = new HashMap<String, Integer> ();
 		HashMap<String, String> categoryTranslations = new HashMap<String, String>();
 
 		
@@ -183,10 +177,6 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 			for(String category: categoryKeys) {
 				Collection<OCDContent> categoryOCDContent = getCategoryOCDContent(ocdContents, category);
 				for(OCDContent ocdContent : categoryOCDContent ) {
-					String key = ocdContent.scope + "-" + section + "-" + ocdContent.category;
-					updateMap(totals, key, getTotalCount(ocdContent));
-					updateMap(required, key, getRequiredContributionsCount(ocdContent));
-					updateMap(subchapters, key, 1);
 					categoryTranslations.put(ocdContent.category, ocdContent.localizedCategory);
 				}
 			}
@@ -256,26 +246,13 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 							);
 					Collection<OCDContent> categoryOCDContent = getCategoryOCDContent(ocdContents, category);
 					for (OCDContent ocdContent : categoryOCDContent) {
-						int requiredCount = required.get(ocdContent.scope + "-" + section + "-" + ocdContent.category);
-						int totalCount = totals.get(ocdContent.scope + "-" + section + "-" + ocdContent.category);
-						int subCount = subchapters.get(ocdContent.scope + "-" + section + "-" + ocdContent.category);
-						int percent = (int)(100.0*(totalCount-requiredCount)/totalCount);
-						requiredL3 += requiredCount;
-						totalL3 += totalCount;
 						elementName = "ocd-" + scope + "-" + section + "-" + category.replace(' ', '-') + "-" + ocdContent.name.replace(' ', '-');
 						out.println("<li>"
 								+ "<a href=\"#"
 								+ elementName
 								+ "\">"
 								+ ocdContent.name
-								+ "</a> ("
-								+ (requiredCount != 0 
-										? "<span style=\"color:red;\">" + requiredCount + " contribution(s) needed, " 
-										: "<span>")
-								+ "<strong>"
-								+ percent+"%</strong> of " 
-								+ totalCount + " entries documented in " 
-								+ subCount + " sub-entries</span>)"
+								+ "</a>"
 								+ "</li>"
 								);
 						
@@ -310,16 +287,9 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 	void printContent(PrintWriter out, SortedSet<OCDContent> ocdContents, HttpServletRequest request) {
         final String PLEASE_CONTRIBUTE = LanguageUtil.get(request, "cta-please-contribute");
 
-        HashMap<String, Integer> totals = new HashMap<String, Integer> ();
-		HashMap<String, Integer> required = new HashMap<String, Integer> ();
-		HashMap<String, Integer> subchapters = new HashMap<String, Integer> ();
 		HashMap<String, String> categoryTranslations = new HashMap<String, String>();
 		
 		for(OCDContent ocdContent : ocdContents ) {
-			String key = ocdContent.scope+"-"+ocdContent.category;
-			updateMap(totals, key, getTotalCount(ocdContent));
-			updateMap(required, key, getRequiredContributionsCount(ocdContent));
-			updateMap(subchapters, key, 1);
 			categoryTranslations.put(ocdContent.category, ocdContent.localizedCategory);
 		}
 		
@@ -353,24 +323,12 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 							);
 					Collection<OCDContent> categoryOCDContent = getCategoryOCDContent(ocdContents, category);
 					for (OCDContent ocdContent : categoryOCDContent) {
-						int requiredCount = required.get(ocdContent.scope+"-"+ocdContent.category);
-						int totalCount = totals.get(ocdContent.scope+"-"+ocdContent.category);
-						int subCount = subchapters.get(ocdContent.scope+"-"+ocdContent.category);
-						int percent = (int)(100.0*(totalCount-requiredCount)/totalCount);
 						elementName = "ocd-" + scope + "-" + section + "-" + category.replace(' ', '-') + "-" + ocdContent.name.replace(' ', '-');
 						out.println("<h4 id=\""
 								+ elementName
 								+ "\">"
 								+ ocdContent.name
 								+ "</h4>"
-								+ "<span class=\"requiredContributions\">("
-								+ (requiredCount != 0 
-										? "<span style=\"color:red;\">" + requiredCount + " contributions needed, " 
-										: "<span>")
-								+ "<strong>"
-								+ percent+"%</strong> of " 
-								+ totalCount + " entries documented in " 
-								+ subCount + " sub-entries</span>)</span>"
 						);
 				        String description = ocdContent.description;
 						if(description == null || description.isEmpty() || description.equals("null")) {
@@ -442,33 +400,6 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 		}
 	}
 
-	int getRequiredContributionsCount(OCDContent ocdContent) {
-		int result = 0;
-		if(ocdContent.description == null || ocdContent.description.isEmpty() || ocdContent.description.equals("null")
-//			|| ocdContent.learnMessageKey == null || ocdContent.learnMessageKey.isEmpty() || ocdContent.learnMessageKey.equals("null")
-			) {
-			result++;
-		}
-		for (ADContent adContent : ocdContent.ads) {
-			if(adContent.description == null || adContent.description.isEmpty() || adContent.description.equals("null")) {
-				result++;
-			}
-		}
-		return result;
-	}
-	
-	int getTotalCount(OCDContent ocdContent) {
-		int result = ocdContent.ads.size()+1;
-		return result;
-	}
-
-	void updateMap(HashMap<String, Integer> map, String key, int count) {
-		Integer value = map.get(key);
-		if(value == null) value = 0;
-		value += count;
-		map.put(key, value);
-	}
-	
 	Collection<String> getLocalizedScopes(Collection<OCDContent> ocdContents) {
 		Set<String> result = new HashSet<String>();
 		for (OCDContent ocdContent : ocdContents) {

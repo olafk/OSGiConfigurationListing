@@ -12,7 +12,6 @@ class EmptyResourceBundle extends ResourceBundle {
 
 	@Override
 	protected Object handleGetObject(String key) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 }
