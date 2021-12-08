@@ -12,7 +12,7 @@ public class OCDContent {
 	public String scope = "undeclared";
 	public String localizedScope = "undeclared scope";
 	public List<ADContent> ads = new LinkedList<ADContent>();
-	public String comment;
+	public String comment = "";
 	public String bundle;
 	public String learnMessageResource;
 	public String learnMessageKey;

@@ -388,7 +388,7 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 										: ocdContent.learnMessageResource + " / " + ocdContent.learnMessageKey))
 						);
 
-				        if(ocdContent.comment != null) {
+				        if(ocdContent.comment != null && ocdContent.comment.trim().length()>0 ) {
 				            out.println(
 				    			"<br/>\n"
 			   					+ LanguageUtil.get(request, "ocd.comment")

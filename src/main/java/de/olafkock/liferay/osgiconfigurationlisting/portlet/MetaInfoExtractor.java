@@ -6,6 +6,7 @@ import com.liferay.portal.configuration.metatype.definitions.ExtendedObjectClass
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -74,13 +75,18 @@ public class MetaInfoExtractor {
             try {
 				ObjectClassDefinition ocd = mti.getObjectClassDefinition(pids[i], null);
 				errorContext = ocd.getID();
-				ExtendedObjectClassDefinition eocd = emti.getObjectClassDefinition(ocd.getID(), null);
+				ExtendedObjectClassDefinition eocd = null;
+				try {
+					eocd = emti.getObjectClassDefinition(ocd.getID(), null);
+				} catch (Exception e1) {
+					ocdContent.comment = e1.getClass().getName() + " " + e1.getMessage() + " ";
+				}
 				
 				AttributeDefinition[] ads = ocd.getAttributeDefinitions(ObjectClassDefinition.ALL);
 				try{
 					rb = ResourceBundleUtil.getBundle(locale, b.adapt(BundleWiring.class).getClassLoader());
 				} catch(MissingResourceException e) {
-					ocdContent.comment = "Bundle " + b.getSymbolicName() + " does not have a resource bundle content.Language";
+					ocdContent.comment += "Bundle " + b.getSymbolicName() + " does not have a resource bundle content.Language";
 				    rb = new EmptyResourceBundle();
 				}
 				
@@ -96,9 +102,11 @@ public class MetaInfoExtractor {
 				ocdContent.name = LanguageUtil.get(rb, ocd.getName());
 				ocdContent.description = description;
 				ocdContent.bundle = b.getSymbolicName();
-				ocdContent.scope = "no scope given";
+				ocdContent.scope = "no-scope-given";
 				ocdContent.localizedScope = "no scope given";
-				Set<String> extensionUris = eocd.getExtensionUris();
+				ocdContent.category = "third-party"; // best guess as default. Not sure if it's accurate, but looks good
+				Set<String> extensionUris = Collections.EMPTY_SET;
+				if(eocd != null) extensionUris = eocd.getExtensionUris();
 
 				for (String extention : extensionUris) {
 					String category = eocd.getExtensionAttributes(extention).get("category");
@@ -134,6 +142,7 @@ public class MetaInfoExtractor {
 					adContent.resolveOptions(ads[j], rb);
 				}
 			} catch (Exception e) {
+				e.printStackTrace();
 				ocdContent.comment = e.getClass().getName() 
 						+ " " 
 						+ e.getMessage() 
