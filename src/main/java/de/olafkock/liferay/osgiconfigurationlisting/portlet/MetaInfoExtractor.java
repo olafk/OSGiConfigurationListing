@@ -96,6 +96,8 @@ public class MetaInfoExtractor {
 				ocdContent.name = LanguageUtil.get(rb, ocd.getName());
 				ocdContent.description = description;
 				ocdContent.bundle = b.getSymbolicName();
+				ocdContent.scope = "no scope given";
+				ocdContent.localizedScope = "no scope given";
 				Set<String> extensionUris = eocd.getExtensionUris();
 
 				for (String extention : extensionUris) {

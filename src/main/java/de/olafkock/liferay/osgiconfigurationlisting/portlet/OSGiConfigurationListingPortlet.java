@@ -96,6 +96,10 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 		super.doView(renderRequest, response);
 
 		PrintWriter writer = response.getWriter();
+		writer.println("<style>");
+		writer.println(getStyleSheet(".portlet-boundary_" + OSGiConfigurationListingPortletKeys.METALISTER + "_"));
+		writer.println("</style>");
+		
 		writer.println( "<h1>"
 				+ LanguageUtil.format(request, "report.title", ReleaseInfo.getReleaseInfo())
 				+ "</h1>" 
@@ -121,17 +125,10 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 		writer.println("<!DOCTYPE html><html><head><title>"
 				+ LanguageUtil.format(request, "report.title", ReleaseInfo.getReleaseInfo())
 				+ "</title>\n"
-				+ "<style>"
+				+ "<style>\n"
 				+ "body { font-family: sans-serif; }"
-				+ "td { border: 1px solid grey; vertical-align:top; padding-right:1em; }\n"
-				+ "tr.attributename  { font-weight:bold; }\n"
-				+ ".osgi-collapsed { height:0px; overflow: hidden; transition: height 1000ms ease-in-out; }"
-				+ ".osgi-open { height:auto; overflow: auto; transition: height 3000ms ease-in-out; }"
-				+ "h2 { margin-left: 1em; }"
-				+ "h3 { margin-left: 2em; }"
-				+ "h4 { margin-left: 3em; }"
-				+ "h5 { margin-left: 4em; }"
 				+ "button { display:none; }"
+				+ getStyleSheet("")
 				+ "</style>\n"
 				+ "</head>"
 				+ "<body>"
@@ -151,6 +148,25 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 		}
 		
 		writer.println("\n</body></html>");
+	}
+
+	
+	
+	private String getStyleSheet(String scope) {
+		scope += " ";
+		return 
+			  scope + "td { border: 1px solid grey; vertical-align:top; padding-right:1em; }\n"
+			+ scope + "tr.attributename  { font-weight:bold; }\n"
+			+ scope + ".osgi-collapsed { height:0px; overflow: hidden; transition: height 1000ms ease-in-out; }"
+			+ scope + ".osgi-open { height:auto; overflow: auto; transition: height 3000ms ease-in-out; }"
+			+ scope + "h2 { margin-left: 0.5em; margin-top: 1em; }"
+			+ scope + "h3 { margin-left: 1em; margin-top: 1em; }"
+			+ scope + "h4 { margin-left: 1.5em; margin-top: 1em; }"
+			+ scope + "h5 { margin-left: 2em; margin-top: 1em; }"
+			+ scope + "p.ocdcontent { margin-left: 1.5em; }"
+			+ scope + "table.adcontent { margin-left: 1.5em; }"
+			+ scope + "span.requiredContributions { margin-left:3em; }"
+			;	
 	}
 
 	void printToc(PrintWriter out, SortedSet<OCDContent> ocdContents, HttpServletRequest request) {
@@ -264,6 +280,9 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 								);
 						
 					}
+					if(categoryOCDContent.isEmpty()) {
+						out.println("<li>empty</li>");
+					}
 					out.println("</ul>");
 					if(totalL3 > 0) {
 						out.println(requiredL3 != 0 
@@ -280,12 +299,10 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 				out.println("</div>");
 				requiredL1 += requiredL2;
 				totalL1 += totalL2;
-				out.println("</div>");
 			}
 			out.println(requiredL1 != 0 
 					? "L1: <span style=\"color:red;\">" + requiredL1 + " contribution(s) needed, for " + totalL1 + " total entries.</span>" 
 					: "L1: <span>No contributions required. Good job!");
-			out.println("</div>");
 			out.println("</div>");
 		}
 	}
@@ -346,23 +363,23 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 								+ "\">"
 								+ ocdContent.name
 								+ "</h4>"
-								+ " ("
+								+ "<span class=\"requiredContributions\">("
 								+ (requiredCount != 0 
 										? "<span style=\"color:red;\">" + requiredCount + " contributions needed, " 
 										: "<span>")
 								+ "<strong>"
 								+ percent+"%</strong> of " 
 								+ totalCount + " entries documented in " 
-								+ subCount + " sub-entries</span>)"
+								+ subCount + " sub-entries</span>)</span>"
 						);
 				        String description = ocdContent.description;
-						if(description == null || description.isEmpty()) {
+						if(description == null || description.isEmpty() || description.equals("null")) {
 				       		description = "<i>"	+ PLEASE_CONTRIBUTE	+ "</i>";
 				        }
-				        out.println( "<p>"
+				        out.println( "<p class=\"ocdcontent\">"
 				        		+ ocdLine(request, "ocd.id", ocdContent.id)
 				        		+ ocdLine(request, "ocd.bundle", ocdContent.bundle)
-				        		+ ocdLine(request, "ocd.description", ocdContent.description)
+				        		+ ocdLine(request, "ocd.description", description)
 				        		+ ocdLine(request, "ocd.category", ocdContent.category)
 				        		+ ocdLine(request, "ocd.scope", ocdContent.id)
 				        		+ ocdLine(request, "ocd.liferayLearn", 
@@ -380,7 +397,7 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 				            );
 				        }
 				        out.println("</p>");
-						out.println("<table>");
+						out.println("<table class=\"adcontent\">");
 						for (ADContent adContent : ocdContent.ads) {
 							String adDescription = adContent.description;
 							String[] deflts = adContent.deflts;
@@ -417,6 +434,9 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 						}
 				        out.println("</table>");
 					}
+					if(categoryOCDContent.isEmpty()) {
+						out.println("<p class=\"ocdcontent\">empty</p>");
+					}
 				}
 			}
 		}
@@ -424,11 +444,13 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 
 	int getRequiredContributionsCount(OCDContent ocdContent) {
 		int result = 0;
-		if(ocdContent.description == null || ocdContent.description.isEmpty()) {
+		if(ocdContent.description == null || ocdContent.description.isEmpty() || ocdContent.description.equals("null")
+//			|| ocdContent.learnMessageKey == null || ocdContent.learnMessageKey.isEmpty() || ocdContent.learnMessageKey.equals("null")
+			) {
 			result++;
 		}
 		for (ADContent adContent : ocdContent.ads) {
-			if(adContent.description == null || adContent.description.isEmpty()) {
+			if(adContent.description == null || adContent.description.isEmpty() || adContent.description.equals("null")) {
 				result++;
 			}
 		}
