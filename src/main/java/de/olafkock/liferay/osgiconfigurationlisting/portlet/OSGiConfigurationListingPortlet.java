@@ -4,7 +4,6 @@ import com.liferay.configuration.admin.category.ConfigurationCategory;
 import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.configuration.metatype.definitions.ExtendedMetaTypeService;
 import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.patcher.PatcherUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -91,7 +90,6 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 			throws IOException, PortletException {
 		ThemeDisplay themeDisplay = (ThemeDisplay) renderRequest.getAttribute(WebKeys.THEME_DISPLAY);
 		HttpServletRequest request = PortalUtil.getHttpServletRequest(renderRequest);
-		String[] installedPatches = PatcherUtil.getInstalledPatches();
 
 		super.doView(renderRequest, response);
 
@@ -103,7 +101,6 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 		writer.println( "<h1>"
 				+ LanguageUtil.format(request, "report.title", ReleaseInfo.getReleaseInfo())
 				+ "</h1>" 
-				+ LanguageUtil.format(request, "report.patchlevel", (installedPatches != null ? StringUtil.merge(installedPatches, ", ") : "-"))
 		);
 		
 		SortedSet<OCDContent> ocdContents = metaInfoExtractor.extractOCD(_extendedMetaTypeService, themeDisplay.getLocale());
@@ -118,7 +115,6 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 			throws IOException, PortletException {
 		ThemeDisplay themeDisplay = (ThemeDisplay) resourceRequest.getAttribute(WebKeys.THEME_DISPLAY);
 		HttpServletRequest request = PortalUtil.getHttpServletRequest(resourceRequest);
-		String[] installedPatches = PatcherUtil.getInstalledPatches();
 
 		resourceResponse.setContentType("text/html");
 		PrintWriter writer = resourceResponse.getWriter();
@@ -135,7 +131,6 @@ public class OSGiConfigurationListingPortlet extends MVCPortlet {
 				+ "<h1>"
 				+ LanguageUtil.format(request, "report.title", ReleaseInfo.getReleaseInfo())
 				+ "</h1>"
-				+ LanguageUtil.format(request, "report.patchlevel", (installedPatches != null ? StringUtil.merge(installedPatches, ", ") : "-"))
 				);
 		SortedSet<OCDContent> ocdContents = metaInfoExtractor.extractOCD(_extendedMetaTypeService, themeDisplay.getLocale());
 
